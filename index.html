@@ -7,105 +7,388 @@
 <script src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.3/dist/docx-preview.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <style>
 :root{--bg:#eef0f4;--c:#fff;--t:#16202a;--m:#5b6673;--a:#1f7a6d;--b:#d5dae1;--r:#c0392b}
 @media(prefers-color-scheme:dark){:root{--bg:#12161b;--c:#1c222a;--t:#e8ecf0;--m:#9aa5b1;--b:#323b46}}
 *{box-sizing:border-box}body{margin:0;font:14px system-ui,sans-serif;background:var(--bg);color:var(--t)}
-header{background:var(--c);padding:14px 22px;border-bottom:1px solid var(--b)}h1{margin:0;font-size:20px}
+header{background:var(--c);padding:14px 22px;border-bottom:1px solid var(--b)}h1{margin:0;font-size:20px}h3{margin:0 0 8px}
 nav{display:flex;gap:6px;padding:12px 22px;flex-wrap:wrap}nav button{background:var(--c);color:var(--t);border:1px solid var(--b);padding:8px 14px;border-radius:8px;cursor:pointer}
 nav button.on{background:var(--a);color:#fff;border-color:var(--a)}
-main{padding:0 22px 30px;max-width:1100px}.card{background:var(--c);border:1px solid var(--b);border-radius:12px;padding:16px;margin-bottom:14px}
+main{padding:0 22px 30px;max-width:1200px}.card{background:var(--c);border:1px solid var(--b);border-radius:12px;padding:16px;margin-bottom:14px}
 textarea,select,input{width:100%;background:var(--bg);color:var(--t);border:1px solid var(--b);border-radius:8px;padding:8px;font:12px monospace}
 textarea{height:130px}button.p{background:var(--a);color:#fff;border:0;padding:9px 16px;border-radius:8px;cursor:pointer;font-weight:600}button.p:disabled{opacity:.5}
 button.s{background:var(--c);color:var(--t);border:1px solid var(--b);padding:8px 12px;border-radius:8px;cursor:pointer}
-.stats{display:flex;gap:10px;flex-wrap:wrap}.st{flex:1;min-width:130px;background:var(--c);border:1px solid var(--b);border-radius:10px;padding:10px}.st b{font-size:24px;display:block}
-.ok{color:#2e8b57}.bad{color:var(--r)}.warn{color:#b9851a}table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:5px 7px;border-bottom:1px solid var(--b)}
-.tbl{max-height:340px;overflow:auto}.sec{display:none}.sec.on{display:block}small,.m{color:var(--m)}code{background:var(--bg);padding:1px 5px;border-radius:4px}
-.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.stats{display:flex;gap:10px;flex-wrap:wrap}.st{flex:1;min-width:120px;background:var(--c);border:1px solid var(--b);border-radius:10px;padding:10px}.st b{font-size:24px;display:block}
+.ok{color:#2e8b57}.bad{color:var(--r)}.warn{color:#b9851a}table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:5px 7px;border-bottom:1px solid var(--b);vertical-align:top}
+.tbl{max-height:360px;overflow:auto}.sec{display:none}.sec.on{display:block}small,.m{color:var(--m)}code{background:var(--bg);padding:1px 5px;border-radius:4px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px}.row>label{display:flex;gap:6px;align-items:center}.row input[type=checkbox]{width:auto}
 .lkb{background:var(--c);color:var(--t);border:1px solid var(--b);padding:7px 12px;border-radius:8px;cursor:pointer;text-decoration:none;font-size:13px}#lkf input{width:auto}
+#pv{width:100%;min-height:200px;border:1px solid var(--b);border-radius:8px;background:#6b7280;padding:8px;display:flex;align-items:center;justify-content:center;color:#fff}#pv canvas{width:100%;height:auto;display:block;box-shadow:0 2px 10px #0006;background:#fff}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:800px){.grid2{grid-template-columns:1fr}}
+td select{font:12px system-ui;padding:4px}
 @media print{#lk{display:none}}
 </style></head><body><div id="rbox" style="position:fixed;left:-20000px;top:0;background:#fff"></div>
-<header><h1>Certificate Generator</h1><small>Adult &amp; Young Learners — Word templates → personalised PDF → ZIP. Everything stays in your browser.</small></header>
+<header><h1>Certificate Generator</h1><small>Young Learners (Primary &amp; Secondary) and Adult — Word templates → personalised PDF. Everything stays in your browser.</small></header>
 <nav id="nav"></nav><div id="lk" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:0 22px 12px"></div><main>
-<section class="sec" id="s-tpl"><div class="card"><h3>Templates</h3>
-<p class="m">Upload .docx templates containing <code>{{Placeholders}}</code>. Adult: <code>{{StudentName}} {{StudentID}} {{Hours}} {{Level}} {{Month}} {{Year}} {{Teacher}}</code> (any data column works). YL: <code>{{StudentName}} {{Course}} {{Term}} {{TeacherName}} {{AttendanceGrade}} {{ParticipationComment}} {{SpeakingComment}} {{ListeningComment}} {{ReadingComment}} {{WritingComment}}</code> and any column.</p>
-<div class="row"><div style="flex:1"><b>Adult templates</b><input type="file" id="fA" accept=".docx,.dotx" multiple></div>
-<div style="flex:1"><b>YL templates</b> <small>(file name = value of the "Template" column)</small><input type="file" id="fY" accept=".docx,.dotx" multiple></div></div>
-<div id="tplList" style="margin-top:12px"></div></div></section>
+
+<section class="sec" id="s-tpl"><div class="card"><h3>1 · Templates</h3>
+<p class="m">Upload the Word templates once — they are remembered in this browser. Placeholders such as <code>{{StudentName}}</code> <code>{{StudentID}}</code> <code>{{Course}}</code> <code>{{Term}}</code> <code>{{TeacherName}}</code> <code>{{AttendanceGrade}}</code> <code>{{ParticipationComment}}</code> <code>{{SpeakingComment}}</code> <code>{{ListeningComment}}</code> <code>{{ReadingComment}}</code> <code>{{WritingComment}}</code> are filled in; any other data column can be used too (e.g. <code>{{Class}}</code>).</p>
+<div class="row"><div style="flex:1"><b>Young Learner templates</b> <small>(PP_01 … PP_06, PP_SA, PP_SB, LS-US …)</small><input type="file" id="fY" accept=".docx" multiple></div>
+<div style="flex:1"><b>Adult templates</b><input type="file" id="fA" accept=".docx" multiple></div></div>
+<div id="tplList" style="margin-top:12px"></div></div>
+<div class="card"><h3>Level → template</h3><p class="m">Each level (the <b>Event Type</b> column) is matched to a template automatically. Change any row if needed — your choice is remembered. A <code>Template</code> column in the data overrides this.</p><div id="mapT" class="tbl"></div></div></section>
+
+<section class="sec" id="s-yl"><div class="card"><h3>2 · Young Learner student data</h3>
+<p class="m">Paste straight from Excel, including the header row. Your current export works as-is:<br><code>Teaching Centre · Session · Class · Event Type · Student Number · Student Name · Teacher · Gender · Attendance · Speaking · Writing · Reading · Listening · Participation _ Effort</code><br>
+Mapping: Session → Term · Event Type → Level/Course · Student Number → Student ID · Teacher / Teacher 1 → Teacher. Paste Primary and Secondary together or separately (“Add” keeps what is already loaded).</p>
+<textarea id="taY" placeholder="Paste table here"></textarea><div class="row"><button class="p" onclick="load('Y',false)">Load (replace)</button><button class="s" onclick="load('Y',true)">Add to loaded data</button><button class="s" onclick="clr('Y')">Clear</button><span id="msgY" class="m"></span></div></div>
+<div id="vY"></div></section>
+
+<section class="sec" id="s-cb"><div class="card"><h3>3 · Comment bank</h3>
+<p class="m">Paste columns <code>Type · Gender · Subject · Grade · Comment</code> from Excel (tab-separated). It is remembered in this browser.<br>
+• <b>Type</b>: <code>Primary</code> / <code>Secondary</code> (or an exact level such as <code>Primary Plus 1</code>, or <code>All</code>) — the most specific match wins.<br>
+• <b>Gender</b>: <code>Male</code> / <code>Female</code> · <b>Subject</b>: Participation, Speaking, Listening, Reading, Writing · <b>Grade</b>: as in the data, e.g. <code>Strong 1</code>, <code>Medium 2</code>, <code>Weak 3</code>.<br>Comments are used exactly as supplied — nothing is invented.</p>
+<textarea id="taC" placeholder="Paste comment bank here"></textarea><div class="row"><button class="p" onclick="loadCB()">Load comment bank</button><button class="s" onclick="expCB()">Export</button><button class="s" onclick="S.cb={};saveCB();showCB();refresh()">Clear</button><span id="msgC" class="m"></span></div></div>
+<div class="card"><input id="cbq" placeholder="Search comments…" oninput="showCB()"><div class="tbl" id="cbT" style="margin-top:8px"></div></div></section>
 
 <section class="sec" id="s-ad"><div class="card"><h3>Adult student data</h3>
 <p class="m">Paste from Excel with header row: <code>StudentID Level Teacher StudentName Hours Month Year</code> (optional <code>Template</code> column picks the template by file name; otherwise the first Adult template is used).</p>
-<textarea id="taA" placeholder="Paste table here"></textarea><div class="row"><button class="p" onclick="load('A')">Load pasted data</button><button class="s" onclick="clr('A')">Clear</button><span id="msgA" class="m"></span></div></div>
+<textarea id="taA" placeholder="Paste table here"></textarea><div class="row"><button class="p" onclick="load('A',false)">Load pasted data</button><button class="s" onclick="clr('A')">Clear</button><span id="msgA" class="m"></span></div></div>
 <div id="vA"></div></section>
 
-<section class="sec" id="s-yl"><div class="card"><h3>YL student data</h3>
-<p class="m">Columns: <code>Template, Term, Class, Type, Level, Course, StudentID, StudentName, TeacherName, Gender, AttendanceGrade, SpeakingGrade, WritingGarde, ReadingGrade, ListeningGrade, ParticipationEffortGrade</code>. Comments are looked up from the Comment Bank by Type + Gender + Subject + Grade.</p>
-<textarea id="taY" placeholder="Paste table here"></textarea><div class="row"><button class="p" onclick="load('Y')">Load pasted data</button><button class="s" onclick="clr('Y')">Clear</button><span id="msgY" class="m"></span></div></div>
-<div id="vY"></div></section>
-
-<section class="sec" id="s-cb"><div class="card"><h3>Comment bank</h3>
-<p class="m">Paste columns <code>Type, Gender, Subject, Grade, Comment</code> (tab-separated, as copied from Excel). Stray quotes are cleaned. Comments are used exactly as supplied — nothing is invented. <b>Note:</b> several comments in your list were cut at a comma by CSV export (e.g. "He tends to be easily distracted") — please check/complete them below.</p>
-<textarea id="taC" placeholder="Paste comment bank here"></textarea><div class="row"><button class="p" onclick="loadCB()">Load comment bank</button><button class="s" onclick="expCB()">Export CSV</button><span id="msgC" class="m"></span></div></div>
-<div class="card"><input id="cbq" placeholder="Search comments…" oninput="showCB()"><div class="tbl" id="cbT" style="margin-top:8px"></div></div></section>
-
-<section class="sec" id="s-gen"><div class="card"><h3>Generate</h3><p class="m">Choose a set, then generate. Output is one ZIP of PDF files (grouped by teacher / class).</p>
-<div class="row"><button class="p" id="gA" onclick="gen('A')">Generate Adult certificates</button><button class="p" id="gY" onclick="gen('Y')">Generate YL certificates</button></div>
-<div id="sumA" class="m" style="margin-top:10px"></div><div id="sumY" class="m"></div><div class="row"><progress id="pg" value="0" max="1" style="width:100%"></progress></div><div id="log" class="m"></div></div></section>
+<section class="sec" id="s-gen"><div class="card"><h3>4 · Preview &amp; generate</h3>
+<div class="grid2"><div>
+<div class="row"><label>Set <select id="oSet" style="width:auto" onchange="fillLvl()"><option value="Y">Young Learners</option><option value="A">Adult</option></select></label>
+<label>Level <select id="oLvl" style="width:auto" onchange="fillCls()"></select></label>
+<label>Class <select id="oCls" style="width:auto;max-width:330px" onchange="fillPick()"></select></label></div>
+<div class="row"><label>Output <select id="oOut" style="width:auto"><option value="both" selected>Class PDF + separate PDF per student (ZIP)</option><option value="cls">One PDF per class only</option><option value="ind">Separate PDF per student only</option><option value="one">Only one master PDF (A–Z by student name)</option></select></label></div>
+<div class="row"><label>Folders <select id="oGrp" style="width:auto"><option value="stage" selected>Level folder (Primary / Secondary · Adult = Beginner) → Class folders</option><option value="yl">YL Reports — Primary + Secondary together in one folder (Adult = Beginner)</option><option value="flat">Level folder only — all classes of the level together in one folder</option><option value="level">Level folder (Event Type, e.g. Primary Plus 3) → Class folders</option><option value="class">Class folders only</option></select></label></div>
+<div class="row"><label><input type="checkbox" id="oLvM" checked> Also one A–Z PDF with all certificates <b>per level folder</b></label></div>
+<div class="row"><label>Student file name <select id="oFn" style="width:auto"><option value="name" selected>Student name (e.g. Omar Noureldin.pdf)</option><option value="id">Student ID (e.g. 0061654607.pdf)</option><option value="idn">Student ID_Name</option></select></label></div>
+<div class="row"><label><input type="checkbox" id="oMaster" checked> Also create <b>one master PDF with all certificates</b>, sorted A–Z by student name</label></div>
+<div class="row"><label><input type="checkbox" id="oFail"> Skip students with Attendance = Fail</label></div>
+<div class="row"><label><input type="checkbox" id="oUni" checked> Unified font for all certificates (Starter / beginner style)</label><span id="uniMsg" class="m"></span></div>
+<div class="row"><label><input type="checkbox" id="oMiss"> Generate even if a comment is missing (left blank)</label></div>
+<div class="row"><label>Fonts <small>(optional .ttf — e.g. British Council Sans / Calibri; default Helvetica)</small></label></div>
+<div class="row"><label>Regular <input type="file" id="ftR" accept=".ttf" style="width:190px"></label><label>Bold <input type="file" id="ftB" accept=".ttf" style="width:190px"></label><button class="s" onclick="clrFont()">Reset</button><span id="ftMsg" class="m"></span></div>
+<div class="row"><button class="p" id="gBtn" onclick="gen()">Generate PDFs</button><span id="sumG" class="m"></span></div>
+<div class="row"><button class="p" id="bBtn" onclick="batchAll()">⚡ Batch all — YL Reports (Primary + Secondary) + Beginner (Adult)</button><small class="m">Primary and Secondary together in one YL Reports folder · each certificate named by Student ID · plus one print-ready A–Z PDF per level</small></div>
+<div class="row"><label style="flex:1">Individual report by Student ID <input id="oId" placeholder="e.g. 0061654607 — several IDs allowed, separated by space or comma" onkeydown="if(event.key=='Enter')oneById()"></label><button class="p" id="iBtn" onclick="oneById()">Create report</button></div>
+<div class="row"><progress id="pg" value="0" max="1" style="width:100%"></progress></div><div id="log" class="m"></div>
+</div><div>
+<div class="row" style="margin-top:0"><label style="flex:1">Preview student <select id="oPick" onchange="preview()"></select></label><button class="s" onclick="preview()">↻</button></div>
+<div id="pv" style="margin-top:8px">Preview appears here once templates and student data are loaded.</div><div class="row"><span id="pvNote" class="m"></span><button class="s" id="pvOpen" style="display:none" onclick="if(pvURL)window.open(pvURL)">Open PDF in new tab</button></div></div></div></div></section>
 </main>
 <script>
 const $=id=>document.getElementById(id);
-const S={tpl:{A:{},Y:{}},data:{A:[],Y:[]},cb:{}};
-const tabs=[['tpl','Templates'],['ad','Adult'],['yl','Young Learners'],['cb','Comment Bank'],['gen','Generate']];
+const S={tpl:{A:{},Y:{}},data:{A:[],Y:[]},cb:{},map:{},font:null};
+const tabs=[['tpl','1 · Templates'],['yl','2 · Young Learners'],['cb','3 · Comment Bank'],['gen','4 · Preview & Generate'],['ad','Adult']];
 $('nav').innerHTML=tabs.map(t=>`<button id="b-${t[0]}" onclick="go('${t[0]}')">${t[1]}</button>`).join('');
-function go(k){tabs.forEach(t=>{$('s-'+t[0]).classList.toggle('on',t[0]==k);$('b-'+t[0]).classList.toggle('on',t[0]==k)})}go('tpl');
-const norm=s=>(s||'').toString().trim();
+function go(k){tabs.forEach(t=>{$('s-'+t[0]).classList.toggle('on',t[0]==k);$('b-'+t[0]).classList.toggle('on',t[0]==k)});if(k=='gen'){fillLvl();}}
+const norm=s=>(s??'').toString().replace(/ /g,' ').trim();
 const key=s=>norm(s).toLowerCase().replace(/\.(docx|dotx)$/,'').replace(/\s+/g,' ');
-['A','Y'].forEach(k=>$('f'+k).onchange=async e=>{for(const f of e.target.files){S.tpl[k][key(f.name)]={name:f.name,buf:await f.arrayBuffer()}}e.target.value='';tplList();refresh()});
-function tplList(){$('tplList').innerHTML=['A','Y'].map(k=>`<p><b>${k=='A'?'Adult':'YL'} (${Object.keys(S.tpl[k]).length})</b><br>`+Object.values(S.tpl[k]).map(t=>t.name).join(', ')+'</p>').join('')}
-function parse(txt){const L=txt.split(/\r?\n/).filter(l=>l.trim());if(!L.length)return[];const d=L[0].includes('\t')?'\t':',';
- const h=L[0].split(d).map(norm);return L.slice(1).map(l=>{const c=l.split(d),o={};h.forEach((k,i)=>o[k]=norm(c[i]));return o})}
-function load(k){const r=parse($('ta'+k).value);if(k=='Y')r.forEach(o=>{if(o.WritingGrade&&!o.WritingGarde)o.WritingGarde=o.WritingGrade});S.data[k]=r;$('msg'+k).textContent=r.length+' rows loaded';refresh()}
-function clr(k){S.data[k]=[];$('ta'+k).value='';$('msg'+k).textContent='';refresh()}
-function loadCB(){S.cb={};let n=0;$('taC').value.split(/\r?\n/).forEach(l=>{l=l.trim();if(!l)return;l=l.replace(/^"+/,'');const p=l.split('\t');if(p.length<5||/^type$/i.test(p[0]))return;
- const c=p.slice(4).join(' ').replace(/^"+|"+$/g,'').replace(/""/g,'"').trim();S.cb[[p[0],p[1],p[2],p[3]].map(key).join('|')]=c;n++});$('msgC').textContent=n+' comments loaded';showCB();refresh()}
-function showCB(){const q=$('cbq').value.toLowerCase();$('cbT').innerHTML='<table><tr><th>Type</th><th>Gender</th><th>Subject</th><th>Grade</th><th>Comment</th></tr>'+Object.entries(S.cb).filter(e=>e[1].toLowerCase().includes(q)||e[0].includes(q)).map(([k,v])=>'<tr>'+k.split('|').map(x=>`<td>${x}</td>`).join('')+`<td>${v}</td></tr>`).join('')+'</table>'}
-function expCB(){const t='Type\tGender\tSubject\tGrade\tComment\n'+Object.entries(S.cb).map(([k,v])=>k.split('|').join('\t')+'\t'+v).join('\n');dl(new Blob([t],{type:'text/plain'}),'comment-bank.tsv')}
-const SUBJ={ParticipationComment:'ParticipationEffortGrade',SpeakingComment:'SpeakingGrade',ListeningComment:'ListeningGrade',ReadingComment:'ReadingGrade',WritingComment:'WritingGarde'};
-function prep(k,r){const d={...r};if(k=='A'){d.Teacher=d.Teacher||d.TeacherName;d.TeacherName=d.TeacherName||d.Teacher;return{d,miss:[]}}
- const miss=[];for(const[p,s]of Object.entries(SUBJ)){const c=S.cb[[r.Type,r.Gender,s,r[s]].map(key).join('|')];if(c===undefined)miss.push(s);d[p]=c||''}return{d,miss}}
-function tplFor(k,r){const T=S.tpl[k],ks=Object.keys(T);if(r.Template&&T[key(r.Template)])return T[key(r.Template)];if(k=='A'&&!r.Template&&ks.length)return T[ks[0]];return null}
-function status(k,r){if(!norm(r.StudentName))return['Data problem: no name','bad'];if(!tplFor(k,r))return['Missing template','warn'];if(k=='Y'&&prep(k,r).miss.length)return['Missing comment: '+prep(k,r).miss.join(', '),'warn'];return['Ready','ok']}
-function refresh(){['A','Y'].forEach(k=>{const R=S.data[k],st=R.map(r=>status(k,r)),c=x=>st.filter(s=>s[0].startsWith(x)).length;
- const cols=R.length?Object.keys(R[0]).slice(0,k=='A'?7:9):[];
- $('v'+k).innerHTML=`<div class="stats"><div class="st"><b>${R.length}</b>Students</div><div class="st"><b class="ok">${c('Ready')}</b>Ready</div><div class="st"><b class="warn">${c('Missing template')}</b>Missing template</div>${k=='Y'?`<div class="st"><b class="warn">${c('Missing comment')}</b>Missing comments</div>`:''}<div class="st"><b class="bad">${c('Data')}</b>Data problems</div></div>
- <div class="card tbl" style="margin-top:12px"><table><tr>${cols.map(x=>`<th>${x}</th>`).join('')}<th>Status</th></tr>${R.map((r,i)=>`<tr>${cols.map(x=>`<td>${r[x]||''}</td>`).join('')}<td class="${st[i][1]}">${st[i][0]}</td></tr>`).join('')}</table></div>`;
- $('g'+k).disabled=false;$('sum'+k).innerHTML=`<b>${k=='A'?'Adult':'YL'}:</b> templates uploaded: ${Object.keys(S.tpl[k]).length} · students: ${R.length} · ready: ${c('Ready')} · missing template: ${c('Missing template')}`+(k=='Y'?` · missing comments: ${c('Missing comment')}`:'')+` · problems: ${c('Data')}`})}
-const safe=s=>norm(s).replace(/[\\/:*?"<>|]+/g,'-');
-function dl(b,n){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
-async function toPdf(blob){const box=$('rbox');box.innerHTML='';
- await docx.renderAsync(blob,box,null,{inWrapper:false,breakPages:true,useBase64URL:true});
- await new Promise(r=>setTimeout(r,200));let pdf;
- for(const sec of box.querySelectorAll('section.docx')){const cv=await html2canvas(sec,{scale:2,useCORS:true,backgroundColor:'#fff'});
-  const w=sec.offsetWidth,h=sec.offsetHeight,o=w>h?'l':'p';
-  if(!pdf)pdf=new jspdf.jsPDF({orientation:o,unit:'px',format:[w,h],hotfixes:['px_scaling']});else pdf.addPage([w,h],o);
-  pdf.addImage(cv.toDataURL('image/jpeg',.92),'JPEG',0,0,w,h)}
+const nk=s=>norm(s).toLowerCase().replace(/[^a-z0-9]/g,'');
+const hx=s=>(s??'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+
+/* ---------- IndexedDB (templates + fonts persist) ---------- */
+const IDB={db:null,async open(){if(this.db)return this.db;return this.db=await new Promise((res,rej)=>{const r=indexedDB.open('certgen',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})},
+ async put(k,v){try{const d=await this.open();await new Promise(r=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=r;t.onerror=r})}catch(e){}},
+ async get(k){try{const d=await this.open();return await new Promise(r=>{const q=d.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>r(q.result);q.onerror=()=>r(null)})}catch(e){return null}}};
+const saveTpl=()=>IDB.put('tpl',{A:Object.fromEntries(Object.entries(S.tpl.A).map(([k,v])=>[k,{name:v.name,buf:v.buf}])),Y:Object.fromEntries(Object.entries(S.tpl.Y).map(([k,v])=>[k,{name:v.name,buf:v.buf}]))});
+
+/* ---------- Templates ---------- */
+async function addTpl(k,name,buf){const t={name,buf};try{t.lay=await parseTpl(buf)}catch(e){t.err=e.message}S.tpl[k][key(name)]=t}
+['A','Y'].forEach(k=>$('f'+k).onchange=async e=>{for(const f of e.target.files)await addTpl(k,f.name,await f.arrayBuffer());e.target.value='';saveTpl();tplList();refresh()});
+function delTpl(k,n){delete S.tpl[k][n];saveTpl();tplList();refresh()}
+function tplList(){UREF=null;if(window.uniMsg)uniMsg();$('tplList').innerHTML=['Y','A'].map(k=>{const T=Object.entries(S.tpl[k]);return `<p><b>${k=='A'?'Adult':'Young Learners'} (${T.length})</b> `+(T.length?T.map(([n,t])=>`<span class="lkb" style="display:inline-block;margin:2px" title="${t.lay?t.lay.boxes.length+' text boxes, '+t.lay.imgs.length+' image(s)':'layout not readable – uses fallback renderer'}">${hx(t.name)} <span class="${t.lay&&t.lay.boxes.length?'ok':'warn'}">${t.lay&&t.lay.boxes.length?'✔':'⚠'}</span> <a href="#" onclick="delTpl('${k}','${hx(n)}');return false" style="color:var(--r)">✕</a></span>`).join(''):'<span class="m">none yet</span>')+'</p>'}).join('')+`<p class="m">✔ = native PDF rendering (exact positions from the Word file) · ⚠ = no text boxes found, older image-based renderer is used.</p>`}
+
+/* Level -> template auto-match */
+function autoTpl(ev){const T=S.tpl.Y,ks=Object.keys(T);if(!ks.length)return'';const e=nk(ev),c=ks.map(k=>[k,nk(k.replace(/^[0-9a-f]{8}-/,''))]);
+ const find=(...pats)=>{for(const p of pats){const h=c.filter(x=>p.test(x[1])).pop();if(h)return h[0]}return''};/* newest upload wins when several match */
+ if(/secondary/.test(e))return find(/lsus/,/secondary/,/^us/,/^ls/);
+ let m=e.match(/starter([ab])/);if(m)return find(new RegExp('pps'+m[1]),new RegExp('starter'+m[1]));
+ m=e.match(/plus(\d)/);if(m)return find(new RegExp('pp0?'+m[1]+'(1)?$'),new RegExp('pp0?'+m[1]));
+ return''}
+function tplKeyFor(ev){const m=S.map[key(ev)];return m&&S.tpl.Y[m]?m:autoTpl(ev)}
+function setMap(ev,v){S.map[key(ev)]=v;LS.set('cg_map',S.map);refresh()}
+function mapTable(){const evs=[...new Set(S.data.Y.map(r=>r.Course).filter(Boolean))].sort(),ks=Object.keys(S.tpl.Y);
+ if(!evs.length){$('mapT').innerHTML='<p class="m">Load student data to see the levels.</p>';return}
+ $('mapT').innerHTML='<table><tr><th>Level (Event Type)</th><th>Students</th><th>Template</th></tr>'+evs.map(ev=>{const cur=tplKeyFor(ev),n=S.data.Y.filter(r=>r.Course==ev).length;
+ return `<tr><td>${hx(ev)}</td><td>${n}</td><td><select onchange="setMap(this.dataset.ev,this.value)" data-ev="${hx(ev)}"><option value="">— none —</option>${ks.map(k=>`<option value="${hx(k)}" ${k==cur?'selected':''}>${hx(S.tpl.Y[k].name)}</option>`).join('')}</select> ${cur?'':'<span class="warn">choose a template</span>'}</td></tr>`}).join('')+'</table>'}
+
+/* ---------- DOCX layout parser (text boxes + images) ---------- */
+const EMU=12700;
+async function parseTpl(buf){
+ const zip=await JSZip.loadAsync(buf);const X=async p=>{const f=zip.file(p);return f?new DOMParser().parseFromString(await f.async('string'),'application/xml'):null};
+ const doc=await X('word/document.xml'),sty=await X('word/styles.xml'),rel=await X('word/_rels/document.xml.rels');
+ const A=(e,n)=>e?e.getAttribute(n):null,F=(e,n)=>e?e.getElementsByTagName(n)[0]:null,kids=(e,n)=>e?[...e.childNodes].filter(c=>c.nodeName==n):[];
+ const rels={};if(rel)for(const r of rel.getElementsByTagName('Relationship'))rels[r.getAttribute('Id')]=r.getAttribute('Target');
+ const sect=[...doc.getElementsByTagName('w:sectPr')].pop(),pg=F(sect,'w:pgSz'),mar=F(sect,'w:pgMar');
+ const W=+(A(pg,'w:w')||11906)/20,H=+(A(pg,'w:h')||16838)/20,M={l:+(A(mar,'w:left')||0)/20,r:+(A(mar,'w:right')||0)/20,t:+(A(mar,'w:top')||0)/20,b:+(A(mar,'w:bottom')||0)/20};
+ const onoff=e=>e&&!/^(0|false|off)$/.test(A(e,'w:val')||'');
+ const rpr=(e,base)=>{const o={...base};if(!e)return o;const sz=F(e,'w:sz'),c=F(e,'w:color'),b=kids(e,'w:b')[0],i=kids(e,'w:i')[0],cap=kids(e,'w:caps')[0];if(sz)o.sz=+A(sz,'w:val')/2;if(c&&A(c,'w:val')!='auto')o.color=A(c,'w:val');if(b)o.b=onoff(b);if(i)o.i=onoff(i);if(cap)o.caps=onoff(cap);return o};
+ const ppr=(e,base)=>{const o={...base};if(!e)return o;const s=kids(e,'w:spacing')[0],j=kids(e,'w:jc')[0],ind=kids(e,'w:ind')[0];
+  if(s){if(A(s,'w:before')!=null)o.before=+A(s,'w:before')/20;if(A(s,'w:after')!=null)o.after=+A(s,'w:after')/20;if(A(s,'w:line')!=null){o.line=+A(s,'w:line');o.rule=A(s,'w:lineRule')||'auto'}}
+  if(j)o.jc=A(j,'w:val');if(ind){o.indL=+(A(ind,'w:left')||A(ind,'w:start')||0)/20;o.indR=+(A(ind,'w:right')||A(ind,'w:end')||0)/20;o.indF=(+(A(ind,'w:firstLine')||0)-+(A(ind,'w:hanging')||0))/20}return o};
+ let dR={sz:11,color:'000000',b:false,i:false},dP={before:0,after:0,line:240,rule:'auto',jc:'left',indL:0,indR:0,indF:0};const ST={};
+ if(sty){const dd=F(sty,'w:docDefaults');if(dd){dR=rpr(F(F(dd,'w:rPrDefault'),'w:rPr'),dR);dP=ppr(F(F(dd,'w:pPrDefault'),'w:pPr'),dP)}
+  for(const s of sty.getElementsByTagName('w:style'))ST[A(s,'w:styleId')]={s,based:A(F(s,'w:basedOn'),'w:val'),def:A(s,'w:default')=='1'&&A(s,'w:type')=='paragraph'}}
+ const styleChain=id=>{const out=[];let g=0;while(id&&ST[id]&&g++<10){out.unshift(ST[id].s);id=ST[id].based}return out};
+ const defPara=Object.keys(ST).find(k=>ST[k].def);
+ const resolveP=pid=>{let r=dR,p=dP;for(const s of styleChain(pid||defPara)){p=ppr(kids(s,'w:pPr')[0],p);r=rpr(kids(s,'w:rPr')[0],r)}return{r,p}};
+ const inFallback=e=>{for(let p=e.parentNode;p;p=p.parentNode)if(p.nodeName=='mc:Fallback')return true;return false};
+ const pos=(a,ax,size)=>{const p=F(a,'wp:position'+ax),rf=A(p,'relativeFrom'),off=F(p,'wp:posOffset'),al=F(p,'wp:align');let s,e;
+  if(ax=='H'){if(rf=='page'){s=0;e=W}else if(rf=='leftMargin'){s=0;e=M.l}else if(rf=='rightMargin'){s=W-M.r;e=W}else{s=M.l;e=W-M.r}}
+  else{if(rf=='page'){s=0;e=H}else if(rf=='topMargin'){s=0;e=M.t}else if(rf=='bottomMargin'){s=H-M.b;e=H}else{s=M.t;e=H-M.b}}
+  if(off)return s+(+off.textContent)/EMU;const v=al?al.textContent:'left';if(/right|bottom|outside/.test(v))return e-size;if(/center/.test(v))return (s+e-size)/2;return s};
+ const imgs=[],boxes=[];
+ for(const a of doc.getElementsByTagName('wp:anchor')){if(inFallback(a))continue;const ex=F(a,'wp:extent'),w=+A(ex,'cx')/EMU,h=+A(ex,'cy')/EMU;
+  const x=pos(a,'H',w),y=pos(a,'V',h),z=(A(a,'behindDoc')=='1'?0:1e10)+(+(A(a,'relativeHeight')||0));
+  const blip=F(a,'a:blip');
+  if(blip&&!F(a,'wps:txbx')){const t=rels[A(blip,'r:embed')];if(!t)continue;const path='word/'+t.replace(/^\/?word\//,'').replace(/^\.\//,''),f=zip.file(path);if(!f)continue;
+   const ext=path.split('.').pop().toLowerCase();if(!/png|jpe?g/.test(ext))continue;imgs.push({x,y,w,h,z,fmt:ext=='png'?'PNG':'JPEG',data:'data:image/'+(ext=='png'?'png':'jpeg')+';base64,'+await f.async('base64')});continue}
+  const tx=F(a,'w:txbxContent');if(!tx)continue;const bp=F(a,'wps:bodyPr');
+  const ins={l:+(A(bp,'lIns')??91440)/EMU,t:+(A(bp,'tIns')??45720)/EMU,r:+(A(bp,'rIns')??91440)/EMU,b:+(A(bp,'bIns')??45720)/EMU};
+  const paras=[];for(const p of tx.getElementsByTagName('w:p')){const pp=F(p,'w:pPr'),pid=A(F(pp,'w:pStyle'),'w:val'),base=resolveP(pid),P=ppr(pp,base.p),mark=rpr(F(pp,'w:rPr'),base.r);const ch=[];
+   for(const r of p.getElementsByTagName('w:r')){const st=rpr(F(r,'w:rPr'),base.r);for(const c of r.childNodes){const st2={sz:st.sz,b:!!st.b,i:!!st.i,color:st.color};
+    if(c.nodeName=='w:t')for(const L of (st.caps?c.textContent.toUpperCase():c.textContent))ch.push({c:L,...st2});else if(c.nodeName=='w:tab')ch.push({c:'    ',...st2});else if(c.nodeName=='w:br'||c.nodeName=='w:cr')ch.push({c:'\n',...st2})}}
+   paras.push({...P,mark:mark.sz,ch})}
+  let fill=null;const spPr=F(a,'wps:spPr'),sf=spPr&&kids(spPr,'a:solidFill')[0];if(sf){const rgb=F(sf,'a:srgbClr'),sc=F(sf,'a:schemeClr');if(rgb)fill=A(rgb,'val');else if(sc)fill={bg1:'FFFFFF',lt1:'FFFFFF',tx1:'000000',dk1:'000000'}[A(sc,'val')]||null}
+  for(let i=0;i<paras.length-1;){const t=paras[i].ch.map(c=>c.c).join('');if(t.lastIndexOf('{{')>t.lastIndexOf('}}')){paras[i].ch=paras[i].ch.concat(paras[i+1].ch);paras.splice(i+1,1)}else i++}
+  const raw=paras.map(q=>q.ch.map(c=>c.c).join('')).join(' ');const role=/Comment\s*\}\}/i.test(raw)?'com':/^[^{]*\{\{\s*StudentID\s*\}\}[^{]*$/i.test(raw)?'id':/^\s*\{\{\s*(Term|Session)\s*\}\}\s*$/i.test(raw)?'term':'info';
+  boxes.push({x,y,w,h,z,ins,fill,role,anchor:role=='term'?'ctr':(A(bp,'anchor')||'t'),paras})}
+ imgs.sort((a,b)=>a.z-b.z);boxes.sort((a,b)=>a.z-b.z);
+ return{W,H,imgs,boxes}}
+
+/* ---------- Native PDF renderer ---------- */
+const FONT={n:'helvetica'};
+/* Unified typography: take label/value size & weight from the Starter (beginner) template and apply to every template */
+let UREF=null;
+function refTpl(){const T=S.tpl.Y,ks=Object.keys(T).filter(k=>T[k].lay&&T[k].lay.boxes.length);const by=re=>ks.find(k=>re.test(nk(k.replace(/^[0-9a-f]{8}-/,''))));
+ const k=by(/ppsa/)||by(/ppsb/)||by(/starter/)||by(/^pp/);return k?T[k]:null}
+function buildUREF(){UREF=null;const t=refTpl();if(!t)return;const R={};
+ for(const b of t.lay.boxes){const cnt={lab:{},val:{}};for(const p of b.paras){const s=p.ch.map(c=>c.c).join(''),inPh=new Array(s.length).fill(false);let m;const re=/\{\{[^{}]*\}\}/g;while((m=re.exec(s)))for(let i=m.index;i<m.index+m[0].length;i++)inPh[i]=true;
+  p.ch.forEach((c,i)=>{if(!c.c.trim())return;const g=inPh[i]?cnt.val:cnt.lab,kk=c.sz+'|'+(c.b?1:0);g[kk]=(g[kk]||0)+1})}
+  const top=o=>{const e=Object.entries(o).sort((a,b)=>b[1]-a[1])[0];if(!e)return null;const[sz,bb]=e[0].split('|');return{sz:+sz,b:bb=='1'}};
+  const lab=top(cnt.lab),v=top(cnt.val);if(!R[b.role]&&(lab||v))R[b.role]={lab:lab||v,val:v||lab}}
+ UREF=Object.keys(R).length?{name:t.name,R}:null}
+function unifyRef(role){if(role=='term'||!$('oUni').checked)return null;if(!UREF)buildUREF();return UREF&&UREF.R[role]||null}
+function fillChars(chars,d){const s=chars.map(c=>c.c).join(''),out=[];let i=0;const re=/\{\{\s*([^{}]+?)\s*\}\}/g;let m;
+ while((m=re.exec(s))){for(;i<m.index;i++)out.push(chars[i]);const st=chars[m.index],v=val(d,m[1]);for(const L of v.replace(/\r/g,''))out.push({...st,c:L,ph:true});i=m.index+m[0].length}
+ for(;i<chars.length;i++)out.push(chars[i]);return out}
+function val(d,name){const k=nk(name);if(d.__n[k]!=null)return d.__n[k];return''}
+function setF(pdf,st,sc){pdf.setFont(FONT.n,st.b?(FONT.n=='helvetica'||FONT.bold?'bold':'normal'):'normal');pdf.setFontSize(st.sz*sc)}
+function layoutBox(pdf,b,d,sc){const iw=b.w-b.ins.l-b.ins.r,lines=[];let hTot=0;
+ const U=unifyRef(b.role);for(const p of b.paras){let ch=fillChars(p.ch,d);if(U)ch=ch.map(c=>c.c=='\n'?c:{...c,...((c.ph||/\d/.test(c.c))?U.val:U.lab)});const before=p.before*sc,after=p.after*sc;
+  const tokens=[];let cur=null;for(const c of ch){const sp=c.c==' ',nl=c.c=='\n';const t=nl?'nl':sp?'sp':'w';
+   if(cur&&cur.t==t&&t!='nl'&&cur.b==c.b&&cur.sz==c.sz&&cur.color==c.color)cur.s+=c.c;else tokens.push(cur={t,s:c.c,b:c.b,sz:c.sz,color:c.color,i:c.i})}
+  // merge word fragments of different styles into word groups
+  const words=[];let wg=null;for(const t of tokens){if(t.t=='w'){if(!wg){wg={t:'w',parts:[]};words.push(wg)}wg.parts.push(t)}else{wg=null;words.push(t)}}
+  const meas=t=>{setF(pdf,t,sc);return pdf.getTextWidth(t.s)};
+  for(const w of words){if(w.t=='w')w.wd=w.parts.reduce((a,p)=>a+meas(p),0);else if(w.t=='sp')w.wd=meas(w)}
+  const avail=iw-p.indL-p.indR;let line={items:[],w:0,first:true},pl=[];
+  const push=(end)=>{while(line.items.length&&line.items[line.items.length-1].t=='sp'){line.w-=line.items.pop().wd}line.end=end;pl.push(line);line={items:[],w:0}};
+  for(const w of words){if(w.t=='nl'){push(true);continue}const lim=avail-(pl.length==0?p.indF:0);
+   if(w.t=='sp'){if(!line.items.length)continue;line.items.push(w);line.w+=w.wd;continue}
+   if(line.w+w.wd>lim&&line.items.length){push(false)}line.items.push(w);line.w+=w.wd}
+  push(true);
+  const maxSz=l=>Math.max(p.mark||0,...l.items.flatMap(x=>x.t=='w'?x.parts.map(q=>q.sz):[x.sz]))*sc;
+  pl.forEach((l,i)=>{const ms=maxSz(l)||11*sc,nat=ms*1.2;let lh=p.rule=='exact'?p.line/20*sc:p.rule=='atLeast'?Math.max(p.line/20*sc,nat):nat*p.line/240;
+   l.lh=lh;l.ms=ms;l.p=p;l.firstOfP=i==0;l.indF=i==0?p.indF:0;l.before=i==0?before:0;l.after=i==pl.length-1?after:0;hTot+=l.before+lh+l.after;lines.push(l)})}
+ if(lines.length)hTot-=lines[lines.length-1].after;
+ return{lines,h:hTot,iw}}
+function drawBox(pdf,b,d){if(b.fill){const c=b.fill;pdf.setFillColor(parseInt(c.slice(0,2),16),parseInt(c.slice(2,4),16),parseInt(c.slice(4,6),16));pdf.rect(b.x,b.y,b.w,b.h,'F')}const ih=b.h-b.ins.t-b.ins.b;let sc=1,L=layoutBox(pdf,b,d,1);
+ while(L.h>ih+0.5&&sc>0.5){sc-=0.03;L=layoutBox(pdf,b,d,sc)}
+ let y=b.y+b.ins.t;if(b.anchor=='ctr')y+=Math.max(0,(ih-L.h)/2);else if(b.anchor=='b')y+=Math.max(0,ih-L.h);
+ const x0=b.x+b.ins.l;
+ for(const l of L.lines){y+=l.before;const p=l.p,avail=L.iw-p.indL-p.indR-l.indF;let x=x0+p.indL+l.indF,gap=0;
+  if(p.jc=='center')x+=(avail-l.w)/2;else if(p.jc=='right'||p.jc=='end')x+=avail-l.w;else if(p.jc=='both'&&!l.end){const sps=l.items.filter(i=>i.t=='sp').length;if(sps)gap=(avail-l.w)/sps}
+  const base=y+l.lh-(l.lh-l.ms)/2-l.ms*0.22;
+  for(const it of l.items){if(it.t=='sp'){x+=it.wd+gap;continue}
+   for(const q of it.parts){setF(pdf,q,sc);const c=(q.color||'000000').replace('#','');pdf.setTextColor(parseInt(c.slice(0,2),16)||0,parseInt(c.slice(2,4),16)||0,parseInt(c.slice(4,6),16)||0);
+    if(FONT.n!='helvetica'&&q.b&&!FONT.bold){pdf.text(q.s,x,base,{renderingMode:'fillThenStroke'});}else pdf.text(q.s,x,base);x+=pdf.getTextWidth(q.s)}}
+  y+=l.lh+l.after}
+ return sc}
+function newPdf(lay){return new jspdf.jsPDF({orientation:lay.W>lay.H?'l':'p',unit:'pt',format:[lay.W,lay.H],compress:true})}
+function applyFont(pdf){if(!S.font)return;try{pdf.addFileToVFS('cgR.ttf',S.font.R);pdf.addFont('cgR.ttf','cg','normal');if(S.font.B){pdf.addFileToVFS('cgB.ttf',S.font.B);pdf.addFont('cgB.ttf','cg','bold')}}catch(e){}}
+function renderPage(pdf,lay,d,first){if(!first)pdf.addPage([lay.W,lay.H],lay.W>lay.H?'l':'p');
+ FONT.n=S.font?'cg':'helvetica';FONT.bold=!!(S.font&&S.font.B);
+ const items=[...lay.imgs.map((im,i)=>({im,i})),...lay.boxes.map(b=>({b}))];/* images first (backgrounds), then text boxes in Word z-order */let minSc=1;
+ for(const it of items){if(it.im){const im=it.im;pdf.addImage(im.data,im.fmt,im.x,im.y,im.w,im.h,'img'+it.i+'_'+im.data.length,'FAST')}else minSc=Math.min(minSc,drawBox(pdf,it.b,d))}return minSc}
+
+/* ---------- Fallback renderer (old: docx → image) ---------- */
+async function fallbackPages(t,d,pdf){const doc=new window.docxtemplater(new PizZip(t.buf.slice(0)),{delimiters:{start:'{{',end:'}}'},paragraphLoop:true,linebreaks:true,nullGetter:()=>''});
+ doc.render(d);const blob=new Blob([doc.getZip().generate({type:'uint8array'})]);const box=$('rbox');box.innerHTML='';
+ await docx.renderAsync(blob,box,null,{inWrapper:false,breakPages:true,useBase64URL:true});await new Promise(r=>setTimeout(r,200));
+ for(const sec of box.querySelectorAll('section.docx')){const cv=await html2canvas(sec,{scale:2,useCORS:true,backgroundColor:'#fff'});const w=sec.offsetWidth*.75,h=sec.offsetHeight*.75,o=w>h?'l':'p';
+  if(!pdf)pdf=new jspdf.jsPDF({orientation:o,unit:'pt',format:[w,h]});else pdf.addPage([w,h],o);pdf.addImage(cv.toDataURL('image/jpeg',.92),'JPEG',0,0,w,h)}
  box.innerHTML='';return pdf}
-async function gen(k){const rd=S.data[k].filter(r=>status(k,r)[1]=='ok').length;if(!rd){const R=S.data[k];alert(!Object.keys(S.tpl[k]).length?'No '+(k=='A'?'Adult':'YL')+' template uploaded. Go to Templates first.':!R.length?'No student data loaded. Paste the data and click Load pasted data.':'No students are ready. Open the '+(k=='A'?'Adult':'Young Learners')+' tab and read the Status column.');return}if(!window.PizZip||!window.docxtemplater||!window.JSZip||!window.docx||!window.html2canvas||!window.jspdf){alert('Libraries failed to load. Check your internet connection and reload the page.');return}const Z=new JSZip(),R=S.data[k],log=[];let ok=0,i=0;
- for(const r of R){i++;$('pg').value=i/R.length;if(status(k,r)[1]!='ok')continue;
-  try{const t=tplFor(k,r),{d}=prep(k,r);const doc=new window.docxtemplater(new PizZip(t.buf.slice(0)),{delimiters:{start:'{{',end:'}}'},paragraphLoop:true,linebreaks:true,nullGetter:()=>''});
-   doc.render(d);const folder=safe(k=='A'?(d.Teacher||'Adult'):(d.Class||'YL'));
-   const blob=new Blob([doc.getZip().generate({type:'uint8array'})]);
-   const pdf=await toPdf(blob);Z.file(`${folder}/${safe(d.StudentID||i)}_${safe(d.StudentName)}.pdf`,pdf.output('arraybuffer'));ok++}
-  catch(e){log.push(`${r.StudentName}: ${e.message}`)}
-  if(i%10==0)await new Promise(r=>setTimeout(r))}
- if(ok){dl(await Z.generateAsync({type:'blob'}),(k=='A'?'Adult':'YL')+'-certificates-PDF.zip')}
- $('log').innerHTML=`<p class="ok">${ok} certificates generated.</p>`+(log.length?`<p class="bad">Failed (${log.length}):<br>${log.join('<br>')}</p>`:'')}
-refresh();showCB();
+
+/* ---------- Data ---------- */
+const ALIAS={StudentName:['studentname','name','student'],StudentID:['studentnumber','studentid','studentno','id'],TeacherName:['teacher','teacher1','teachername','teacher2'],
+ Term:['session','term'],Course:['eventtype','course','level'],Class:['class','classcode'],Gender:['gender','sex'],AttendanceGrade:['attendance','attendancegrade'],
+ SpeakingGrade:['speaking','speakinggrade'],WritingGrade:['writing','writinggrade','writinggarde'],ReadingGrade:['reading','readinggrade'],ListeningGrade:['listening','listeninggrade'],
+ ParticipationEffortGrade:['participationeffort','participationeffortgrade','participationandeffort','participation','effort'],TeachingCentre:['teachingcentre','centre','center'],Template:['template'],Type:['type']};
+function canon(o){const n={};for(const[k,v]of Object.entries(o))n[nk(k)]=v;const d={...o};
+ for(const[c,al]of Object.entries(ALIAS)){if(norm(d[c]))continue;for(const a of al)if(norm(n[a])){d[c]=n[a];break}}
+ d.Teacher=d.Teacher||d.TeacherName;return d}
+function parse(txt){const L=txt.split(/\r?\n/).filter(l=>l.trim());if(!L.length)return[];
+ let hi=L.findIndex(l=>/student/i.test(l)&&(l.includes('\t')||l.includes(',')));if(hi<0)hi=0;const d=L[hi].includes('\t')?'\t':',';
+ const h=L[hi].split(d).map(norm);return L.slice(hi+1).map(l=>{const c=l.split(d),o={};h.forEach((k,i)=>{if(k)o[k]=norm(c[i])});return canon(o)}).filter(o=>Object.values(o).some(v=>v))}
+function load(k,add){const r=parse($('ta'+k).value);if(!r.length){$('msg'+k).textContent='Nothing recognised — include the header row.';return}
+ S.data[k]=add?S.data[k].concat(r):r;$('msg'+k).textContent=r.length+' rows '+(add?'added':'loaded')+' · total '+S.data[k].length;$('ta'+k).value='';refresh()}
+function clr(k){S.data[k]=[];$('ta'+k).value='';$('msg'+k).textContent='';refresh()}
+
+/* ---------- Comment bank ---------- */
+const SUBJ={ParticipationComment:['ParticipationEffortGrade','participation'],SpeakingComment:['SpeakingGrade','speaking'],ListeningComment:['ListeningGrade','listening'],ReadingComment:['ReadingGrade','reading'],WritingComment:['WritingGrade','writing']};
+const subjKey=s=>{s=nk(s).replace(/(grade|garde|comment)$/,'');if(/partic|effort/.test(s))return'participation';return s};
+const genKey=g=>{g=nk(g);if(/^(m|male|boy|he)$/.test(g))return'male';if(/^(f|female|girl|she)$/.test(g))return'female';return g};
+const gradeKey=g=>nk(g);
+function cbKey(t,g,s,gr){return[nk(t),genKey(g),subjKey(s),gradeKey(gr)].join('|')}
+function loadCB(){let n=0;$('taC').value.split(/\r?\n/).forEach(l=>{if(!l.trim())return;l=l.replace(/^"+/,'');const p=l.split('\t');if(p.length<5||/^type$/i.test(p[0].trim()))return;
+ const c=p.slice(4).join(' ').replace(/^"+|"+$/g,'').replace(/""/g,'"').trim();if(!c)return;S.cb[cbKey(p[0],p[1],p[2],p[3])]={t:norm(p[0]),g:norm(p[1]),s:norm(p[2]),gr:norm(p[3]),c};n++});
+ $('msgC').textContent=n+' comments loaded · total '+Object.keys(S.cb).length;$('taC').value='';saveCB();showCB();refresh()}
+const saveCB=()=>LS.set('cg_cb',S.cb);
+function showCB(){const q=$('cbq').value.toLowerCase(),E=Object.values(S.cb).filter(e=>(e.c+e.t+e.g+e.s+e.gr).toLowerCase().includes(q));
+ $('cbT').innerHTML=`<p class="m">${Object.keys(S.cb).length} comments</p><table><tr><th>Type</th><th>Gender</th><th>Subject</th><th>Grade</th><th>Comment</th></tr>`+E.slice(0,800).map(e=>`<tr><td>${hx(e.t)}</td><td>${hx(e.g)}</td><td>${hx(e.s)}</td><td>${hx(e.gr)}</td><td>${hx(e.c)}</td></tr>`).join('')+'</table>'}
+function expCB(){const t='Type\tGender\tSubject\tGrade\tComment\n'+Object.values(S.cb).map(e=>[e.t,e.g,e.s,e.gr,e.c].join('\t')).join('\n');dl(new Blob([t],{type:'text/plain'}),'comment-bank.tsv')}
+function typeCands(r){const ev=norm(r.Course),c=[];if(r.Type)c.push(r.Type);c.push(ev,ev.replace(/\s*(A1|A2|B1(\.\d)?|B2(\.\d)?|C1|\d+|[AB])$/i,''));
+ const e=ev.toLowerCase();if(e.includes('secondary')){c.push(e.includes('upper')?'Upper Secondary':'Lower Secondary','Secondary Plus','Secondary')}
+ if(e.includes('primary')){if(e.includes('starter'))c.push(e.includes('upper')?'Upper Primary Starter':'Primary Starter','Starter');c.push(e.includes('upper')?'Upper Primary':'Lower Primary','Primary Plus','Primary')}
+ c.push('All','Any','YL','*','');return[...new Set(c.map(nk))]}
+function lookup(r,subj,grade){if(!norm(grade))return undefined;const types=typeCands(r);for(const t of types){const e=S.cb[[t,genKey(r.Gender),subjKey(subj),gradeKey(grade)].join('|')];if(e)return e.c}
+ const one=[...new Set(Object.values(S.cb).map(e=>nk(e.t)))];if(one.length==1){const e=S.cb[[one[0],genKey(r.Gender),subjKey(subj),gradeKey(grade)].join('|')];if(e)return e.c}return undefined}
+function prep(k,r){const d={...r};if(k=='A'){d.Teacher=d.Teacher||d.TeacherName;d.TeacherName=d.TeacherName||d.Teacher}
+ const miss=[];if(k=='Y')for(const[p,[col,name]]of Object.entries(SUBJ)){if(norm(d[p]))continue;const c=lookup(r,name,r[col]);if(c===undefined)miss.push(name+(norm(r[col])?' ('+r[col]+')':' (no grade)'));d[p]=c||''}
+ d.__n={};for(const[x,v]of Object.entries(d))if(x!='__n')d.__n[nk(x)]=norm(v);
+ const AL={name:'studentname',student:'studentname',id:'studentid',studentnumber:'studentid',teacher:'teachername',teacher1:'teachername',level:'course',course:'course',eventtype:'course',term:'term',session:'term',attendance:'attendancegrade'};
+ for(const[a,b]of Object.entries(AL)){if(d.__n[a]==null||d.__n[a]==='')if(d.__n[b])d.__n[a]=d.__n[b]}
+ if(d.__n.course&&!d.__n.level)d.__n.level=d.__n.course;
+ return{d,miss}}
+function unknownPh(t,d){const out=new Set();if(!t.lay)return[];for(const b of t.lay.boxes)for(const p of b.paras){const sx=p.ch.map(c=>c.c).join('');let m;const re=/\{\{\s*([^{}]+?)\s*\}\}/g;while((m=re.exec(sx))){const k=nk(m[1]);if(d.__n[k]==null)out.add(m[1])}}return[...out]}
+function tplFor(k,r){const T=S.tpl[k],ks=Object.keys(T);if(r.Template&&T[key(r.Template)])return T[key(r.Template)];if(r.Template){const h=ks.find(x=>nk(x).includes(nk(r.Template)));if(h)return T[h]}
+ if(k=='Y'){const t=tplKeyFor(r.Course);return t?T[t]:null}return ks.length?T[ks[0]]:null}
+function status(k,r){if(!norm(r.StudentName))return['Data problem: no name','bad'];if(k=='Y'&&$('oFail').checked&&/^fail/i.test(norm(r.AttendanceGrade)))return['Skipped: attendance Fail','m'];
+ if(!tplFor(k,r))return['Missing template','warn'];if(k=='Y'){const m=prep(k,r).miss;if(m.length&&!$('oMiss').checked)return['Missing comment: '+m.join(', '),'warn']}return['Ready','ok']}
+function refresh(){['A','Y'].forEach(k=>{const R=S.data[k],st=R.map(r=>status(k,r)),c=x=>st.filter(s=>s[0].startsWith(x)).length;
+ const cols=k=='Y'?['Class','Course','StudentID','StudentName','TeacherName','Gender','AttendanceGrade']:(R.length?Object.keys(R[0]).slice(0,7):[]);
+ const tn=r=>{const t=tplFor(k,r);return t?t.name:''};
+ $('v'+k).innerHTML=R.length?`<div class="stats"><div class="st"><b>${R.length}</b>Students</div><div class="st"><b class="ok">${c('Ready')}</b>Ready</div><div class="st"><b class="warn">${c('Missing template')}</b>Missing template</div>${k=='Y'?`<div class="st"><b class="warn">${c('Missing comment')}</b>Missing comments</div><div class="st"><b>${c('Skipped')}</b>Skipped (Fail)</div>`:''}<div class="st"><b class="bad">${c('Data')}</b>Data problems</div></div>
+ <div class="card tbl" style="margin-top:12px"><table><tr>${cols.map(x=>`<th>${x}</th>`).join('')}<th>Template</th><th>Status</th></tr>${R.map((r,i)=>`<tr>${cols.map(x=>`<td>${hx(r[x]||'')}</td>`).join('')}<td>${hx(tn(r))}</td><td class="${st[i][1]}">${hx(st[i][0])}</td></tr>`).join('')}</table></div>`:'';
+ if($('oSet').value==k)$('sumG').innerHTML=`${R.length} students · <span class="ok">${c('Ready')} ready</span>`});mapTable();if($('s-gen').classList.contains('on'))fillLvl()}
+const safe=s=>norm(s).replace(/[\\/:*?"<>|]+/g,'-').slice(0,120);
+function dl(b,n){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+const grp=(k,d)=>k=='A'?(d.Teacher||'Adult'):(d.Class||d.Course||'YL');
+
+/* ---------- Generate & preview ---------- */
+/* Level = Primary / Secondary (YL) or the Level column (Adult) */
+function stageOf(k,r){const e=norm(r.Course).toLowerCase();if(k=='A')return'Beginner';if(k=='Y'){if(/secondary/.test(e))return'Secondary';if(/primary/.test(e))return'Primary'}return norm(r.Course)||(k=='A'?'Adult':'Other')}
+function folderOf(k,r){const m=$('oGrp').value;if(m=='yl')return k=='Y'?'YL Reports':'Beginner';if(m=='class')return'';if(m=='level')return safe(norm(r.Course)||'Other');return safe(stageOf(k,r))}
+/* Individual report(s) by Student ID — searches YL and Adult data */
+const idn=x=>nk(x).replace(/^0+/,'');
+async function oneById(){const ids=[...new Set($('oId').value.split(/[\s,;]+/).map(norm).filter(Boolean))];if(!ids.length){alert('Enter a Student ID.');return}
+ if(!window.JSZip||!window.jspdf){alert('Libraries failed to load. Check your internet connection and reload the page.');return}
+ const hits=[],bad=[],warn=[];
+ for(const id of ids){let h=null;for(const k of['Y','A']){const r=S.data[k].find(r=>norm(r.StudentID)&&idn(r.StudentID)==idn(id));if(r){h={k,r,id};break}}
+  if(!h){bad.push(id+': not found in loaded data');continue}
+  if(!norm(h.r.StudentName)){bad.push(id+': no student name');continue}
+  if(!tplFor(h.k,h.r)){bad.push(id+' ('+h.r.StudentName+'): no template for level "'+(h.r.Course||'')+'"');continue}hits.push(h)}
+ if(hits.length){const f=hits[0];$('oSet').value=f.k;fillLvl();$('oLvl').value='';fillCls();$('oCls').value='';fillPick();$('oPick').value=S.data[f.k].indexOf(f.r);preview()}
+ $('iBtn').disabled=true;const files=[];
+ try{for(const h of hits){try{const t=tplFor(h.k,h.r),{d,miss}=prep(h.k,h.r);if(miss.length)warn.push(h.id+' ('+d.StudentName+'): missing comment — '+miss.join(', '));
+   const x=await addCert(null,t,d,true);files.push([safe(d.StudentID||h.id)+'.pdf',x.pdf])}catch(e){bad.push(h.id+': '+e.message)}}
+  const used={};for(const f of files){let n=f[0],i=1;while(used[n.toLowerCase()])n=f[0].replace(/\.pdf$/,'_'+(++i)+'.pdf');used[n.toLowerCase()]=1;f[0]=n}
+  if(files.length==1)dl(files[0][1].output('blob'),files[0][0]);
+  else if(files.length){const Z=new JSZip();for(const[n,p]of files)Z.file(n,p.output('arraybuffer'));dl(await Z.generateAsync({type:'blob'}),'Reports by Student ID.zip')}
+  $('log').innerHTML=(files.length?`<p class="ok">${files.length} individual report(s) created: ${hx(files.map(f=>f[0]).join(', '))}</p>`:'')+(warn.length?`<p class="warn">${warn.map(hx).join('<br>')}</p>`:'')+(bad.length?`<p class="bad">${bad.map(hx).join('<br>')}</p>`:'')}
+ finally{$('iBtn').disabled=false}}
+/* One-click: all levels, all classes, flat level folders, files by Student ID, A–Z print PDF per level */
+async function batchAll(){$('oSet').value='Y';fillLvl();$('oLvl').value='';fillCls();$('oCls').value='';fillPick();
+ $('oGrp').value='yl';$('oFn').value='id';$('oOut').value='ind';$('oLvM').checked=true;$('oMaster').checked=false;
+ if(!window.JSZip||!window.jspdf){alert('Libraries failed to load. Check your internet connection and reload the page.');return}
+ if(!S.data.Y.length&&!S.data.A.length){alert('No student data loaded.');return}
+ $('bBtn').disabled=$('gBtn').disabled=true;const Z=new JSZip(),out=[];
+ try{$('log').textContent='YL Reports (Primary + Secondary)…';const y=await gen({k:'Y',R:S.data.Y,Z});out.push(['YL Reports',y]);
+  $('log').textContent='Adult (Beginner)…';const a=await gen({k:'A',R:S.data.A,Z});out.push(['Beginner (Adult)',a]);
+  const ok=y.ok+a.ok,shr=[...y.shr,...a.shr],log=[...y.log,...a.log];
+  if(ok)dl(await Z.generateAsync({type:'blob'}),'ALL levels-certificates-PDF.zip');else alert('No students are ready. Check the Status column.');
+  $('log').innerHTML=`<p class="ok">${ok} certificates generated · ${out.map(x=>x[0]+': '+x[1].ok).join(' · ')}</p>`+(shr.length?`<p class="warn">Text was shrunk noticeably to fit for ${shr.length} student(s): ${hx(shr.slice(0,15).join(', '))}${shr.length>15?'…':''} — check these.</p>`:'')+(log.length?`<p class="bad">Failed (${log.length}):<br>${log.map(hx).join('<br>')}</p>`:'')}
+ finally{$('bBtn').disabled=$('gBtn').disabled=false;$('pg').value=1}}
+function lvlRows(){const k=$('oSet').value,lv=$('oLvl').value;return S.data[k].filter(r=>!lv||stageOf(k,r)==lv)}
+function rowsFor(){const k=$('oSet').value,cl=$('oCls').value;return lvlRows().filter(r=>!cl||grp(k,r)==cl)}
+function fillLvl(){const k=$('oSet').value,cur=$('oLvl').value,L=[...new Set(S.data[k].map(r=>stageOf(k,r)))].sort();
+ $('oLvl').innerHTML=`<option value="">All levels (${S.data[k].length})</option>`+L.map(l=>`<option ${l==cur?'selected':''} value="${hx(l)}">${hx(l)} (${S.data[k].filter(r=>stageOf(k,r)==l).length})</option>`).join('');fillCls()}
+function fillCls(){const k=$('oSet').value,cur=$('oCls').value,B=lvlRows(),cls=[...new Set(B.map(r=>grp(k,r)))];
+ $('oCls').innerHTML=`<option value="">All classes (${B.length})</option>`+cls.map(c=>`<option ${c==cur?'selected':''} value="${hx(c)}">${hx(c)} (${B.filter(r=>grp(k,r)==c).length})</option>`).join('');fillPick()}
+function fillPick(){const k=$('oSet').value,R=rowsFor(),cur=$('oPick').value;
+ $('oPick').innerHTML=R.map((r,i)=>{const s=status(k,r);return`<option value="${S.data[k].indexOf(r)}">${s[1]=='ok'?'✔':'⚠'} ${hx(r.StudentName)} — ${hx(r.Course||'')}</option>`}).join('');
+ if([...$('oPick').options].some(o=>o.value==cur))$('oPick').value=cur;const R2=R.map(r=>status(k,r));$('sumG').innerHTML=`${R.length} students in selection · <span class="ok">${R2.filter(s=>s[1]=='ok').length} ready</span>`;preview()}
+let pvURL=null,pvT=null,pvN=0,pdfW=null;
+const PDFW='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+function pdfWorker(){if(pdfW)return pdfW;return pdfW=(async()=>{pdfjsLib.GlobalWorkerOptions.workerSrc=PDFW;
+ try{const t=await (await fetch(PDFW)).text();pdfjsLib.GlobalWorkerOptions.workerSrc=URL.createObjectURL(new Blob([t],{type:'text/javascript'}))}catch(e){}})()}
+const pvMsg=m=>{$('pv').textContent=m;$('pvOpen').style.display='none';$('pvNote').textContent=''};
+function preview(){clearTimeout(pvT);pvT=setTimeout(async()=>{const my=++pvN,k=$('oSet').value;
+ if(!S.data[k].length)return pvMsg('No student data loaded yet — paste it in step 2.');
+ if(!Object.keys(S.tpl[k]).length)return pvMsg('No templates uploaded yet — add them in step 1.');
+ const r=S.data[k][+$('oPick').value];if(!r)return pvMsg('Choose a student.');
+ const t=tplFor(k,r);if(!t)return pvMsg('No template matched for level "'+(r.Course||'')+'" — set it in step 1.');
+ try{const{d,miss}=prep(k,r);let pdf;if(t.lay&&t.lay.boxes.length){pdf=newPdf(t.lay);applyFont(pdf);renderPage(pdf,t.lay,d,true)}else pdf=await fallbackPages(t,d);
+  if(pvURL)URL.revokeObjectURL(pvURL);const blob=pdf.output('blob');pvURL=URL.createObjectURL(blob);
+  if(window.pdfjsLib){await pdfWorker();
+   const doc=await pdfjsLib.getDocument({data:new Uint8Array(await blob.arrayBuffer()),verbosity:0}).promise,pg=await doc.getPage(1);if(my!=pvN)return;
+   const vp=pg.getViewport({scale:2}),cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;if(my!=pvN)return;
+   $('pv').innerHTML='';$('pv').appendChild(cv)}
+  else{$('pv').innerHTML='<iframe style="width:100%;height:520px;border:0" src="'+pvURL+'#view=Fit&toolbar=0"></iframe>'}
+  $('pvOpen').style.display='';$('pvNote').innerHTML=(t.name?'Template: '+hx(t.name):'')+(miss.length?' · <span class="warn">Missing comment: '+hx(miss.join(', '))+'</span>':'')+(unknownPh(t,d).length?' · <span class="bad">Template field not found in data: '+hx(unknownPh(t,d).join(', '))+'</span>':'')}
+ catch(e){pvMsg('Preview error: '+e.message)}},120)}
+async function addCert(pdfRef,t,d,first){/* returns pdf (create if null) */
+ const nat=t.lay&&t.lay.boxes.length;if(nat){let G=pdfRef;if(!G){G=newPdf(t.lay);applyFont(G);first=true}const s=renderPage(G,t.lay,d,first);return{pdf:G,shrunk:s<.8}}
+ return{pdf:await fallbackPages(t,d,pdfRef),shrunk:false}}
+async function gen(o){o=o||{};const k=o.k||$('oSet').value,R=(o.R||rowsFor()).filter(r=>status(k,r)[1]=='ok');
+ if(!R.length){if(o.Z)return{ok:0,shr:[],log:[]};alert(!Object.keys(S.tpl[k]).length?'No template uploaded. Go to Templates first.':!S.data[k].length?'No student data loaded.':'No students are ready. Check the Status column.');return}
+ if(!window.JSZip||!window.jspdf){alert('Libraries failed to load. Check your internet connection and reload the page.');return}
+ const mode=$('oOut').value,master=$('oMaster').checked||mode=='one',lvM=mode!='one'&&$('oLvM').checked&&$('oGrp').value!='class',two=master||lvM,flat=/^(flat|yl)$/.test($('oGrp').value),Z=o.Z||new JSZip(),log=[],shr=[],groups={},used={},LM={};let ok=0,i=0;$('gBtn').disabled=true;
+ const fnOf=(d,g,idx)=>{const fm=$('oFn').value,nm=safe(d.StudentName),id=safe(d.StudentID||idx);let b=fm=='id'&&norm(d.StudentID)?id:fm=='name'?nm:`${id}_${nm}`;
+  const u=used[g]=used[g]||{};let f=b,n=1;while(u[f.toLowerCase()]){f=fm=='name'&&norm(d.StudentID)?`${b}_${id}`:`${b}_${++n}`;if(u[f.toLowerCase()])f=`${b}_${id}_${++n}`}u[f.toLowerCase()]=1;return f+'.pdf'};
+ for(const r of R){i++;$('pg').value=(i/R.length)*(two?.5:1);
+  try{const t=tplFor(k,r),{d}=prep(k,r),g=safe(grp(k,r)),lf=folderOf(k,r),pth=flat?lf:(lf?lf+'/'+g:g);
+   if(mode=='ind'||mode=='both'){const x=await addCert(null,t,d,true);if(x.shrunk)shr.push(d.StudentName);Z.file(`${pth}/${mode=='both'&&!flat?'Students/':''}${fnOf(d,pth,i)}`,x.pdf.output('arraybuffer'))}
+   if((mode=='cls'||mode=='both')&&!(flat&&lvM)){const G=groups[pth],x=await addCert(G,t,d,false);groups[pth]=x.pdf;if(x.shrunk&&mode=='cls')shr.push(d.StudentName)}
+   ok++}catch(e){log.push(`${r.StudentName}: ${e.message}`)}
+  if(i%5==0)await new Promise(r=>setTimeout(r))}
+ let M=null;
+ if(two&&ok){const S2=[...R].sort((a,b)=>norm(a.StudentName).localeCompare(norm(b.StudentName),'en',{sensitivity:'base',numeric:true}));let j=0;
+  for(const r of S2){j++;$('pg').value=.5+(j/S2.length)*.5;try{const t=tplFor(k,r),{d}=prep(k,r);
+   if(master){const x=await addCert(M,t,d,false);M=x.pdf;if(mode=='one'&&x.shrunk)shr.push(d.StudentName)}
+   if(lvM){const lf=folderOf(k,r),y=await addCert(LM[lf],t,d,false);LM[lf]=y.pdf}}catch(e){}if(j%5==0)await new Promise(r=>setTimeout(r))}}
+ const tag=(k=='A'?'Adult':'YL')+'-certificates',mname='ALL certificates (A-Z by student name).pdf';
+ if(ok){if(mode=='one')dl(M.output('blob'),tag+' - A-Z by student name.pdf');else{for(const[p,pdf]of Object.entries(groups))Z.file(`${p}/${p.split('/').pop()} - ALL.pdf`,pdf.output('arraybuffer'));
+  for(const[lf,pdf]of Object.entries(LM))Z.file(`${lf}/${lf} - ALL (A-Z by student name).pdf`,pdf.output('arraybuffer'));if(M)Z.file(mname,M.output('arraybuffer'));
+  if(o.Z)return{ok,shr,log};const n=Object.keys(groups).length;if(mode=='cls'&&n==1&&!M&&!Object.keys(LM).length){const g=Object.keys(groups)[0];dl(groups[g].output('blob'),g.split('/').pop()+'.pdf')}else dl(await Z.generateAsync({type:'blob'}),tag+'-PDF.zip')}}
+ if(o.Z)return{ok,shr,log};$('gBtn').disabled=false;$('pg').value=1;
+ $('log').innerHTML=`<p class="ok">${ok} certificates generated.</p>`+(shr.length?`<p class="warn">Text was shrunk noticeably to fit for ${shr.length} student(s): ${hx(shr.slice(0,15).join(', '))}${shr.length>15?'…':''} — check these.</p>`:'')+(log.length?`<p class="bad">Failed (${log.length}):<br>${log.map(hx).join('<br>')}</p>`:'')}
+
+/* ---------- Fonts ---------- */
+const b64=buf=>{let s='',u=new Uint8Array(buf);for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(s)};
+['R','B'].forEach(x=>$('ft'+x).onchange=async e=>{const f=e.target.files[0];if(!f)return;S.font=S.font||{};S.font[x]=b64(await f.arrayBuffer());if(!S.font.R)S.font.R=S.font[x];IDB.put('font',S.font);ftMsg();preview()});
+function clrFont(){S.font=null;IDB.put('font',null);ftMsg();preview()}
+function ftMsg(){$('ftMsg').textContent=S.font?('Custom font in use'+(S.font.B?' (regular + bold)':' (regular only)')):'Using Helvetica'}
+['oFail','oMiss'].forEach(x=>$(x).onchange=()=>{refresh();fillPick()});
+$('oUni').checked=LS.get('cg_uni',true);$('oUni').onchange=()=>{LS.set('cg_uni',$('oUni').checked);uniMsg();preview()};
+function uniMsg(){buildUREF();$('uniMsg').textContent=$('oUni').checked?(UREF?'Style taken from '+UREF.name.replace(/^[0-9a-f]{8}-/,''):'Upload the Starter template (PP_SA) to use this'):''}
+$('oSet').value='Y';
+
+/* ---------- Startup ---------- */
+(async()=>{S.cb=LS.get('cg_cb',{});S.map=LS.get('cg_map',{});go('tpl');const T=await IDB.get('tpl');
+ if(T)for(const k of['A','Y'])for(const v of Object.values(T[k]||{}))await addTpl(k,v.name,v.buf);
+ S.font=await IDB.get('font');ftMsg();tplList();showCB();refresh()})();
 
 /* ===== Quick links to other sites (add / edit / remove) ===== */
 let LK=(()=>{try{return JSON.parse(localStorage.getItem('links')||'null')}catch(e){return null}})()||[],LKM=false,LKE=null;
 const lsv=()=>{try{localStorage.setItem('links',JSON.stringify(LK))}catch(e){}};
-const hx=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
 function fixUrl(u){u=u.trim();if(!u)return '';if(/^[a-z]+:/i.test(u))return u;if(/^[A-Za-z]:\\|^\\\\/.test(u))return 'file:///'+u.replace(/\\/g,'/');return 'https://'+u}
 function renderLK(){const l=LKE!==null?(LKE>=0?LK[LKE]:{n:'',u:''}):null;
  $('lk').innerHTML='<b>🔗 Links:</b>'+(LK.length?'':'<span class="m">No sites yet</span>')+
